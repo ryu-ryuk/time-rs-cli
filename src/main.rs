@@ -14,9 +14,10 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Paragraph},
 };
+
 use std::{
     error::Error,
-    io::{self, Write},
+    io::{self},
     time::{Duration, Instant},
 };
 
