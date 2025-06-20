@@ -23,12 +23,12 @@ use std::{
 };
 
 #[derive(Parser, Debug)]
-#[command(name = "timer-cli", disable_help_flag = true)]
+#[command(name = "timeRS", disable_help_flag = true)]
 #[command(about = "A terminal-based countdown timer", long_about = None)]
 struct Args {
     #[arg(short, long, default_value_t = 120)]
     duration: u64,
-    #[arg(short, long, default_value = "timer-cli")]
+    #[arg(short, long, default_value = "time-RS")]
     title: String,
     #[arg(short, long, default_value = "mocha")]
     style: String,
