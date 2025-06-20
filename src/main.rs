@@ -46,8 +46,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn run(args: Args) -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    // try resizing terminal to 50x8 cells for best preview
-    // TODO: doesn't work
     execute!(stdout, SetSize(50, 8)).ok();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
@@ -109,6 +107,10 @@ fn timer_loop(
                         theme_style(&theme),
                     )),
                     Line::from(Span::styled(
+                        "│ p: pomodoro (25m)           │",
+                        theme_style(&theme),
+                    )),
+                    Line::from(Span::styled(
                         "└───────────────────────────────┘",
                         theme_style(&theme),
                     )),
@@ -163,6 +165,11 @@ fn timer_loop(
                         if duration > Duration::from_secs(10) {
                             duration -= Duration::from_secs(10);
                         }
+                        show_help = false;
+                    }
+                    KeyCode::Char('p') => {
+                        duration = Duration::from_secs(1500); // 25 minutes
+                        start = Instant::now();
                         show_help = false;
                     }
                     _ => {}
