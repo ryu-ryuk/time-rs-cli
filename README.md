@@ -55,7 +55,7 @@
 ## 🎥 Preview
 
 <p align="center">
-  <img src="docs/preview.gif" alt="Preview of Time-RS CLI" width="75%"/>
+  <img src="docs/preview.gif" alt="Preview of Time-RS CLI" width="85%"/>
 </p>
 
 ---
