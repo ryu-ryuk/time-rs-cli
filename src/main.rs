@@ -34,6 +34,12 @@ struct Args {
     style: String,
 }
 
+enum AppState {
+    Normal,
+    Help,
+    Input,
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
     run(args)
@@ -67,10 +73,45 @@ fn timer_loop(
     let mut start = Instant::now();
     let mut duration = Duration::from_secs(args.duration);
     let theme = mocha_theme();
-    let mut show_help = false;
+    let mut app_state = AppState::Normal;
     let mut already_notified = false;
     let mut paused = false;
     let mut paused_at = Duration::ZERO;
+    let mut tagline_index = 0;
+    let mut last_tagline_change = Instant::now();
+    let tagline_change_interval = Duration::from_secs(5);
+    let mut input_buffer = String::new();
+
+    let taglines = [
+        "press 'h' for control panel (＾ｖ＾)ノ",
+        "set custom time with 'm' key ⌛",
+        "pomodoro mode? hit 'p' 💡",
+        "press 'space' to pause/resume ⏸️",
+    ];
+
+    let reset_timer_state = |new_duration: Option<Duration>,
+                             reset_paused_state: bool,
+                             reset_elapsed_time: bool,
+                             start_time: &mut Instant,
+                             current_duration: &mut Duration,
+                             is_paused: &mut bool,
+                             paused_duration: &mut Duration,
+                             notified_flag: &mut bool| {
+        if let Some(d) = new_duration {
+            *current_duration = d;
+        }
+        if reset_elapsed_time {
+            *start_time = Instant::now();
+            *notified_flag = false;
+        }
+        if reset_paused_state {
+            *is_paused = false;
+            *paused_duration = Duration::ZERO;
+        }
+        if *current_duration == Duration::ZERO {
+            *notified_flag = true;
+        }
+    };
 
     loop {
         let now = Instant::now();
@@ -107,23 +148,22 @@ fn timer_loop(
             } else {
                 1.0
             };
-
-            let total_blocks = 20;
+            let build_status = if is_done {
+                "[OK]"
+            } else if paused {
+                "[||]"
+            } else {
+                "[..]"
+            };
+            let total_blocks = 12;
             let filled = (progress * total_blocks as f64).round() as usize;
-            let empty = total_blocks - filled;
-
             let bar = format!(
-                "⏳ [{}{}] {:>3}% {}",
-                "■".repeat(filled),
-                "・".repeat(empty),
+                "{} [{}{}] {:>3}% {}",
+                build_status,
+                "█".repeat(filled),
+                "░".repeat(total_blocks - filled),
                 (progress * 100.0).round() as u8,
-                match (progress * 100.0) as u8 {
-                    100 => "(๑•̀ㅂ•́)و✧ 完了！",
-                    80..=99 => "٩(｡•́‿•̀｡)۶ Almost there",
-                    50..=79 => "( •̀ ω •́ )✧ 半分だ！",
-                    20..=49 => "(・・;) まだ...",
-                    _ => "(´・ω・｀) Just Starting",
-                }
+                time_str
             );
 
             let bar_style = if is_done {
@@ -137,55 +177,77 @@ fn timer_loop(
                     .add_modifier(Modifier::BOLD)
             };
 
-            let content = if show_help {
-                vec![
-                    Line::from(""),
-                    Line::from(Span::styled(
-                        "╭─[ Control Panel: 操作一覧 ]─╮",
-                        theme_style(&theme),
-                    )),
-                    Line::from(Span::styled(
-                        "│ q: quit      r: restart       │",
-                        theme_style(&theme),
-                    )),
-                    Line::from(Span::styled(
-                        "│ j: +10s      k: -10s          │",
-                        theme_style(&theme),
-                    )),
-                    Line::from(Span::styled(
-                        "│ p: pomodoro  ␣: pause/resume │",
-                        theme_style(&theme),
-                    )),
-                    Line::from(Span::styled(
-                        "│ h: toggle help  esc: close    │",
-                        theme_style(&theme),
-                    )),
-                    Line::from(Span::styled(
-                        "╰──────────────────────────────╯",
-                        theme_style(&theme),
-                    )),
-                    Line::from(""),
-                    Line::from(Span::styled(format!("(；・∀・)  {time_str}"), time_style)),
-                ]
-            } else {
-                vec![
-                    Line::from(Span::styled(
-                        &args.title,
-                        Style::default()
-                            .fg(theme.title)
-                            .add_modifier(Modifier::BOLD | Modifier::ITALIC),
-                    )),
-                    Line::from(""),
-                    Line::from(Span::styled(time_str, time_style)),
-                    Line::from(Span::styled(bar, bar_style)),
-                    Line::from(""),
-                    Line::from(Span::styled(
-                        "press 'h' to open control panel ( ＾◡＾)っ ♨",
-                        Style::default()
-                            .fg(Color::DarkGray)
-                            .add_modifier(Modifier::ITALIC),
-                    )),
-                ]
+            let content = match app_state {
+                AppState::Help => {
+                    vec![
+                        Line::from(""),
+                        Line::from(Span::styled(
+                            "╭─[ Control Panel: 操作一覧 ]─╮",
+                            theme_style(&theme),
+                        )),
+                        Line::from(Span::styled(
+                            "│ q: quit      r: restart       │",
+                            theme_style(&theme),
+                        )),
+                        Line::from(Span::styled(
+                            "│ j: +10s      k: -10s          │",
+                            theme_style(&theme),
+                        )),
+                        Line::from(Span::styled(
+                            "│ p: pomodoro  ␣: pause/resume │",
+                            theme_style(&theme),
+                        )),
+                        Line::from(Span::styled(
+                            "│ m: manual set (mins) esc: ✕  │",
+                            theme_style(&theme),
+                        )),
+                        Line::from(Span::styled(
+                            "╰──────────────────────────────╯",
+                            theme_style(&theme),
+                        )),
+                        Line::from(""),
+                        Line::from(Span::styled(format!("(；・∀・)  {time_str}"), time_style)),
+                    ]
+                }
+                AppState::Input => {
+                    vec![
+                        Line::from(""),
+                        Line::from(Span::styled(
+                            "⏱️  Enter duration in minutes:",
+                            theme_style(&theme),
+                        )),
+                        Line::from(""),
+                        Line::from(Span::styled(
+                            format!(">> {}", input_buffer),
+                            Style::default()
+                                .fg(Color::Rgb(137, 180, 250))
+                                .add_modifier(Modifier::BOLD),
+                        )),
+                        Line::from(""),
+                        Line::from(""),
+                        Line::from(Span::styled(format!("(；・∀・)  {time_str}"), time_style)),
+                    ]
+                }
+                AppState::Normal => {
+                    vec![
+                        Line::from(Span::styled(
+                            &args.title,
+                            Style::default()
+                                .fg(theme.title)
+                                .add_modifier(Modifier::BOLD | Modifier::ITALIC),
+                        )),
+                        Line::from(""),
+                        Line::from(Span::styled(time_str, time_style)),
+                        Line::from(Span::styled(bar, bar_style)),
+                        Line::from(""),
+                        Line::from(Span::styled(
+                            taglines[tagline_index % taglines.len()],
+                            Style::default()
+                                .fg(Color::DarkGray)
+                                .add_modifier(Modifier::ITALIC),
+                        )),
+                    ]
+                }
             };
 
             let block = Paragraph::new(content)
@@ -195,54 +257,140 @@ fn timer_loop(
             f.render_widget(block, layout[0]);
         })?;
 
+        if now.duration_since(last_tagline_change) >= tagline_change_interval {
+            tagline_index = tagline_index.wrapping_add(1);
+            last_tagline_change = now;
+        }
+
         if event::poll(Duration::from_millis(200))? {
             if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('q') => break,
-                    KeyCode::Char('r') => {
-                        start = Instant::now();
-                        paused = false;
-                        paused_at = Duration::ZERO;
-                        show_help = false;
-                        already_notified = false;
-                    }
-                    KeyCode::Char(' ') => {
-                        paused = !paused;
-                        if paused {
-                            paused_at = Instant::now() - start;
-                        } else {
-                            start = Instant::now() - paused_at;
+                match app_state {
+                    AppState::Normal | AppState::Help => match key.code {
+                        KeyCode::Char('q') => break,
+                        KeyCode::Char('r') => {
+                            reset_timer_state(
+                                None,
+                                true,
+                                true,
+                                &mut start,
+                                &mut duration,
+                                &mut paused,
+                                &mut paused_at,
+                                &mut already_notified,
+                            );
+                            app_state = AppState::Normal;
                         }
-                        show_help = false;
-                    }
-                    KeyCode::Char('h') => show_help = !show_help,
-                    KeyCode::Esc => show_help = false,
-                    KeyCode::Char('j') => {
-                        duration += Duration::from_secs(10);
-                        show_help = false;
-                        already_notified = false;
-                    }
-                    KeyCode::Char('k') => {
-                        if duration > Duration::from_secs(10) {
-                            duration -= Duration::from_secs(10);
+                        KeyCode::Char(' ') => {
+                            paused = !paused;
+                            if paused {
+                                paused_at = Instant::now() - start;
+                            } else {
+                                start = Instant::now() - paused_at;
+                            }
+                            app_state = AppState::Normal;
                         }
-                        show_help = false;
-                        already_notified = false;
-                    }
-                    KeyCode::Char('p') => {
-                        duration = Duration::from_secs(1500);
-                        start = Instant::now();
-                        paused = false;
-                        paused_at = Duration::ZERO;
-                        show_help = false;
-                        already_notified = false;
-                    }
-                    _ => {}
+                        KeyCode::Char('h') => {
+                            app_state = match app_state {
+                                AppState::Normal => AppState::Help,
+                                AppState::Help => AppState::Normal,
+                                _ => AppState::Normal,
+                            };
+                        }
+                        KeyCode::Esc => app_state = AppState::Normal,
+                        KeyCode::Char('j') => {
+                            reset_timer_state(
+                                Some(duration + Duration::from_secs(10)),
+                                false,
+                                false,
+                                &mut start,
+                                &mut duration,
+                                &mut paused,
+                                &mut paused_at,
+                                &mut already_notified,
+                            );
+                            app_state = AppState::Normal;
+                        }
+                        KeyCode::Char('k') => {
+                            if duration > Duration::from_secs(10) {
+                                reset_timer_state(
+                                    Some(duration - Duration::from_secs(10)),
+                                    false,
+                                    false,
+                                    &mut start,
+                                    &mut duration,
+                                    &mut paused,
+                                    &mut paused_at,
+                                    &mut already_notified,
+                                );
+                            }
+                            app_state = AppState::Normal;
+                        }
+                        KeyCode::Char('p') => {
+                            reset_timer_state(
+                                Some(Duration::from_secs(1500)),
+                                true,
+                                true,
+                                &mut start,
+                                &mut duration,
+                                &mut paused,
+                                &mut paused_at,
+                                &mut already_notified,
+                            );
+                            app_state = AppState::Normal;
+                        }
+                        KeyCode::Char('m') => {
+                            app_state = AppState::Input;
+                            input_buffer.clear();
+                        }
+                        _ => {}
+                    },
+                    AppState::Input => match key.code {
+                        KeyCode::Char(c) if c.is_ascii_digit() => {
+                            input_buffer.push(c);
+                        }
+                        KeyCode::Backspace => {
+                            input_buffer.pop();
+                        }
+                        KeyCode::Enter => {
+                            if let Ok(mins) = input_buffer.trim().parse::<u64>() {
+                                reset_timer_state(
+                                    Some(Duration::from_secs(mins * 60)),
+                                    true,
+                                    true,
+                                    &mut start,
+                                    &mut duration,
+                                    &mut paused,
+                                    &mut paused_at,
+                                    &mut already_notified,
+                                );
+                            }
+                            app_state = AppState::Normal;
+                            input_buffer.clear();
+                        }
+                        KeyCode::Esc => {
+                            app_state = AppState::Normal;
+                            input_buffer.clear();
+                        }
+                        _ => {}
+                    },
                 }
             }
         }
 
-        if remaining.is_zero() && !already_notified {
+        // Recompute state after event handling for accurate notification check
+        let now_after_events = Instant::now();
+        let elapsed_after_events = if paused {
+            paused_at
+        } else {
+            now_after_events - start
+        };
+        let remaining_after_events = if duration > elapsed_after_events {
+            duration - elapsed_after_events
+        } else {
+            Duration::ZERO
+        };
+
+        if remaining_after_events.is_zero() && !already_notified {
             already_notified = true;
             #[cfg(target_os = "linux")]
             Notification::new()
