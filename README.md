@@ -2,7 +2,7 @@
   <table>
     <tr>
       <td>
-        <img src="docs/time-rs-cli.png" alt="Yoru Timer Logo" width="128" style="vertical-align: middle;"/>
+        <img src="docs/time-rs-cli.png" alt="Yoru Timer Logo" width="128" style="vertical-align: middle; border-radius: 12px;"/>
       </td>
       <td>
         <h1 style="display: inline; vertical-align: middle; margin-left: 16px;">
@@ -12,6 +12,7 @@
     </tr>
   </table>
 </p>
+
 
 
 <h6 align="center" style="color:#bac2de;">
@@ -30,6 +31,10 @@
   <!-- License -->
   <a href="https://github.com/ryu-ryuk/yoru-timer-cli/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-89b4fa?style=for-the-badge&labelColor=1e1e2e&color=89b4fa&logo=openaccess&logoColor=cdd6f4" alt="MIT License"/>
+  </a>
+    <!-- AUR -->
+  <a href="https://aur.archlinux.org/packages/timers">
+    <img src="https://img.shields.io/badge/AUR-timers-89b4fa?style=for-the-badge&logo=arch-linux&logoColor=white&labelColor=1e1e2e" alt="AUR Timers"/>
   </a>
 </p>
 
@@ -57,10 +62,29 @@
 ## 🎥 Preview
 
 <p align="center">
-  <img src="docs/preview.gif" alt="Preview of Yoru Timer TUI" width="85%"/>
+  <img src="docs/preview.gif" alt="Preview of Yoru Timer TUI" width="75%"/>
 </p>
 
 ---
+
+
+
+## 🧪 Installation
+
+
+<a href="https://aur.archlinux.org/packages/timers">
+  <img src="https://img.shields.io/badge/AUR-timers-89dceb?style=for-the-badge&logo=arch-linux&logoColor=white&labelColor=1e1e2e" alt="AUR Timers"/>
+</a>
+
+
+### 📦 Arch Linux / Manjaro (via AUR)
+
+```sh
+yay -S timers
+```
+
+>[!TIP]
+> you can also use paru or any other AUR helper.
 
 ## ⏳ Features
 
@@ -91,10 +115,10 @@ kitty --override initial_window_width=50c \
 
 ## ⚙ Build 
 ```sh
-git clone https://github.com/ryu-ryuk/yoru-timer-cli
-cd yoru-timer-cli
+git clone https://github.com/ryu-ryuk/time-rs-cli
+cd time-rs-cli
 cargo build --release
-./target/release/yoru-timer-cli
+./target/release/timers
 ```
 
 ## 🌫 Contributing
