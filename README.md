@@ -2,7 +2,7 @@
   <table>
     <tr>
       <td>
-        <img src="docs/time-rs-cli.png" alt="Yoru Timer Logo" width="128" style="vertical-align: middle; border-radius: 12px;"/>
+        <img src="docs/time-rs-cli.png" alt="Time-RS cli logo" width="128" style="vertical-align: middle; border-radius: 12px;"/>
       </td>
       <td>
         <h1 style="display: inline; vertical-align: middle; margin-left: 16px;">
@@ -21,15 +21,15 @@
 
 <p align="center">
   <!-- GitHub Stars -->
-  <a href="https://github.com/ryu-ryuk/yoru-timer-cli/stargazers">
-    <img src="https://img.shields.io/badge/Stars-★%20%7C%20ryu--ryuk%2Fyoru--timer--cli-cba6f7?style=for-the-badge&labelColor=1e1e2e&color=cba6f7&logo=github&logoColor=cdd6f4" alt="GitHub Stars"/>
+  <a href="https://github.com/ryu-ryuk/time-rs-cli/stargazers">
+    <img src="https://img.shields.io/badge/Stars-★%20%7C%20ryu--ryuk%2Ftime--rs--cli-cba6f7?style=for-the-badge&labelColor=1e1e2e&color=cba6f7&logo=github&logoColor=cdd6f4" alt="GitHub Stars"/>
   </a>
   <!-- GitHub Issues -->
-  <a href="https://github.com/ryu-ryuk/yoru-timer-cli/issues">
+  <a href="https://github.com/ryu-ryuk/time-rs-cli/issues">
     <img src="https://img.shields.io/badge/Issues-Open-f38ba8?style=for-the-badge&labelColor=1e1e2e&color=f38ba8&logo=github&logoColor=cdd6f4" alt="GitHub Issues"/>
   </a>
   <!-- License -->
-  <a href="https://github.com/ryu-ryuk/yoru-timer-cli/blob/main/LICENSE">
+  <a href="https://github.com/ryu-ryuk/time-rs-cli/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-89b4fa?style=for-the-badge&labelColor=1e1e2e&color=89b4fa&logo=openaccess&logoColor=cdd6f4" alt="MIT License"/>
   </a>
     <!-- AUR -->
@@ -62,7 +62,7 @@
 ## 🎥 Preview
 
 <p align="center">
-  <img src="docs/preview.gif" alt="Preview of Yoru Timer TUI" width="75%"/>
+  <img src="docs/preview.gif" alt="Preview of Time-RS CLI" width="75%"/>
 </p>
 
 ---
@@ -110,7 +110,7 @@ You can use a floating terminal like `kitty` to simulate a popup view: | Might n
 ```sh
 kitty --override initial_window_width=50c \
       --override initial_window_height=8c \
-      ./yoru-timer-cli
+      ./target/release/timers
 ```
 
 ## ⚙ Build 
