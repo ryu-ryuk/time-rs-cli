@@ -265,7 +265,7 @@ fn timer_loop(
         if event::poll(Duration::from_millis(200))? {
             if let Event::Key(key) = event::read()? {
                 match app_state {
-                    AppState::Normal | AppState::Help => match key.code {
+                    AppState::Normal => match key.code {
                         KeyCode::Char('q') => break,
                         KeyCode::Char('r') => {
                             reset_timer_state(
@@ -278,7 +278,6 @@ fn timer_loop(
                                 &mut paused_at,
                                 &mut already_notified,
                             );
-                            app_state = AppState::Normal;
                         }
                         KeyCode::Char(' ') => {
                             paused = !paused;
@@ -287,15 +286,8 @@ fn timer_loop(
                             } else {
                                 start = Instant::now() - paused_at;
                             }
-                            app_state = AppState::Normal;
                         }
-                        KeyCode::Char('h') => {
-                            app_state = match app_state {
-                                AppState::Normal => AppState::Help,
-                                AppState::Help => AppState::Normal,
-                                _ => AppState::Normal,
-                            };
-                        }
+                        KeyCode::Char('h') => app_state = AppState::Help,
                         KeyCode::Esc => app_state = AppState::Normal,
                         KeyCode::Char('j') => {
                             reset_timer_state(
@@ -308,7 +300,6 @@ fn timer_loop(
                                 &mut paused_at,
                                 &mut already_notified,
                             );
-                            app_state = AppState::Normal;
                         }
                         KeyCode::Char('k') => {
                             if duration > Duration::from_secs(10) {
@@ -323,7 +314,6 @@ fn timer_loop(
                                     &mut already_notified,
                                 );
                             }
-                            app_state = AppState::Normal;
                         }
                         KeyCode::Char('p') => {
                             reset_timer_state(
@@ -336,7 +326,6 @@ fn timer_loop(
                                 &mut paused_at,
                                 &mut already_notified,
                             );
-                            app_state = AppState::Normal;
                         }
                         KeyCode::Char('m') => {
                             app_state = AppState::Input;
@@ -344,10 +333,16 @@ fn timer_loop(
                         }
                         _ => {}
                     },
-                    AppState::Input => match key.code {
-                        KeyCode::Char(c) if c.is_ascii_digit() => {
-                            input_buffer.push(c);
+
+                    AppState::Help => match key.code {
+                        KeyCode::Char('q') | KeyCode::Char('h') | KeyCode::Esc => {
+                            app_state = AppState::Normal;
                         }
+                        _ => {}
+                    },
+
+                    AppState::Input => match key.code {
+                        KeyCode::Char(c) if c.is_ascii_digit() => input_buffer.push(c),
                         KeyCode::Backspace => {
                             input_buffer.pop();
                         }
@@ -367,7 +362,7 @@ fn timer_loop(
                             app_state = AppState::Normal;
                             input_buffer.clear();
                         }
-                        KeyCode::Esc => {
+                        KeyCode::Esc | KeyCode::Char('q') => {
                             app_state = AppState::Normal;
                             input_buffer.clear();
                         }
