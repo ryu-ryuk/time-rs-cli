@@ -9,5 +9,5 @@ crossterm = "0.29.0"
 ratatui = "0.29.0"
 
 [[bin]]
-name = "timer"
+name = "timers"
 path = "src/main.rs"
