@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.5.40", features = ["derive"] }
 crossterm = "0.29.0"
+notify-rust = "4.11.7"
 ratatui = "0.29.0"
 
 [[bin]]

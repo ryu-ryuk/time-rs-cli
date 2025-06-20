@@ -6,6 +6,8 @@ use crossterm::{
         EnterAlternateScreen, LeaveAlternateScreen, SetSize, disable_raw_mode, enable_raw_mode,
     },
 };
+#[cfg(target_os = "linux")]
+use notify_rust::Notification;
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
@@ -14,26 +16,20 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Paragraph},
 };
-
 use std::{
     error::Error,
-    io::{self},
+    io,
     time::{Duration, Instant},
 };
 
 #[derive(Parser, Debug)]
-#[command(name = "timer-cli")]
+#[command(name = "timer-cli", disable_help_flag = true)]
 #[command(about = "A terminal-based countdown timer", long_about = None)]
 struct Args {
-    /// duration in seconds
     #[arg(short, long, default_value_t = 120)]
     duration: u64,
-
-    /// title
     #[arg(short, long, default_value = "timer-cli")]
     title: String,
-
-    /// mocha
     #[arg(short, long, default_value = "mocha")]
     style: String,
 }
@@ -72,9 +68,13 @@ fn timer_loop(
     let mut duration = Duration::from_secs(args.duration);
     let theme = mocha_theme();
     let mut show_help = false;
+    let mut already_notified = false;
+    let mut paused = false;
+    let mut paused_at = Duration::ZERO;
 
     loop {
-        let elapsed = Instant::now() - start;
+        let now = Instant::now();
+        let elapsed = if paused { paused_at } else { now - start };
         let remaining = if duration > elapsed {
             duration - elapsed
         } else {
@@ -90,37 +90,82 @@ fn timer_loop(
             let mins = remaining.as_secs() / 60;
             let secs = remaining.as_secs() % 60;
             let time_str = format!("{:02}:{:02}", mins, secs);
+            let is_done = remaining.is_zero();
+
+            let time_style = if is_done {
+                Style::default()
+                    .fg(Color::Rgb(243, 139, 168))
+                    .add_modifier(Modifier::RAPID_BLINK | Modifier::BOLD)
+            } else {
+                Style::default()
+                    .fg(theme.text)
+                    .add_modifier(Modifier::BOLD | Modifier::SLOW_BLINK)
+            };
+
+            let progress = if duration.as_secs() > 0 {
+                (elapsed.as_secs_f64() / duration.as_secs_f64()).clamp(0.0, 1.0)
+            } else {
+                1.0
+            };
+
+            let total_blocks = 20;
+            let filled = (progress * total_blocks as f64).round() as usize;
+            let empty = total_blocks - filled;
+
+            let bar = format!(
+                "⏳ [{}{}] {:>3}% {}",
+                "■".repeat(filled),
+                "・".repeat(empty),
+                (progress * 100.0).round() as u8,
+                match (progress * 100.0) as u8 {
+                    100 => "(๑•̀ㅂ•́)و✧ 完了！",
+                    80..=99 => "٩(｡•́‿•̀｡)۶ Almost there",
+                    50..=79 => "( •̀ ω •́ )✧ 半分だ！",
+                    20..=49 => "(・・;) まだ...",
+                    _ => "(´・ω・｀) Just Starting",
+                }
+            );
+
+            let bar_style = if is_done {
+                Style::default()
+                    .fg(Color::Rgb(243, 139, 168))
+                    .add_modifier(Modifier::RAPID_BLINK | Modifier::BOLD)
+            } else {
+                Style::default()
+                    .fg(Color::Rgb(180, 190, 254))
+                    .bg(Color::Rgb(49, 50, 68))
+                    .add_modifier(Modifier::BOLD)
+            };
 
             let content = if show_help {
                 vec![
                     Line::from(""),
                     Line::from(Span::styled(
-                        "┌──────────── Help ────────────┐",
+                        "╭─[ Control Panel: 操作一覧 ]─╮",
                         theme_style(&theme),
                     )),
                     Line::from(Span::styled(
-                        "│ q: quit   r: restart   h: help │",
+                        "│ q: quit      r: restart       │",
                         theme_style(&theme),
                     )),
                     Line::from(Span::styled(
-                        "│ j: +10s   k: -10s    esc: close │",
+                        "│ j: +10s      k: -10s          │",
                         theme_style(&theme),
                     )),
                     Line::from(Span::styled(
-                        "│ p: pomodoro (25m)           │",
+                        "│ p: pomodoro  ␣: pause/resume │",
                         theme_style(&theme),
                     )),
                     Line::from(Span::styled(
-                        "└───────────────────────────────┘",
+                        "│ h: toggle help  esc: close    │",
+                        theme_style(&theme),
+                    )),
+                    Line::from(Span::styled(
+                        "╰──────────────────────────────╯",
                         theme_style(&theme),
                     )),
                     Line::from(""),
-                    Line::from(Span::styled(
-                        format!("(＾＾；) {time_str}"),
-                        Style::default()
-                            .fg(theme.text)
-                            .add_modifier(Modifier::BOLD | Modifier::SLOW_BLINK),
-                    )),
+                    Line::from(Span::styled(format!("(；・∀・)  {time_str}"), time_style)),
                 ]
             } else {
                 vec![
@@ -131,11 +176,14 @@ fn timer_loop(
                             .add_modifier(Modifier::BOLD | Modifier::ITALIC),
                     )),
                     Line::from(""),
+                    Line::from(Span::styled(time_str, time_style)),
+                    Line::from(Span::styled(bar, bar_style)),
+                    Line::from(""),
                     Line::from(Span::styled(
-                        time_str,
+                        "press 'h' to open control panel ( ＾◡＾)っ ♨",
                         Style::default()
-                            .fg(theme.text)
-                            .add_modifier(Modifier::BOLD | Modifier::SLOW_BLINK),
+                            .fg(Color::DarkGray)
+                            .add_modifier(Modifier::ITALIC),
                     )),
                 ]
             };
@@ -153,6 +201,18 @@ fn timer_loop(
                     KeyCode::Char('q') => break,
                     KeyCode::Char('r') => {
                         start = Instant::now();
+                        paused = false;
+                        paused_at = Duration::ZERO;
+                        show_help = false;
+                        already_notified = false;
+                    }
+                    KeyCode::Char(' ') => {
+                        paused = !paused;
+                        if paused {
+                            paused_at = Instant::now() - start;
+                        } else {
+                            start = Instant::now() - paused_at;
+                        }
                         show_help = false;
                     }
                     KeyCode::Char('h') => show_help = !show_help,
@@ -160,25 +220,37 @@ fn timer_loop(
                     KeyCode::Char('j') => {
                         duration += Duration::from_secs(10);
                         show_help = false;
+                        already_notified = false;
                     }
                     KeyCode::Char('k') => {
                         if duration > Duration::from_secs(10) {
                             duration -= Duration::from_secs(10);
                         }
                         show_help = false;
+                        already_notified = false;
                     }
                     KeyCode::Char('p') => {
-                        duration = Duration::from_secs(1500); // 25 minutes
+                        duration = Duration::from_secs(1500);
                         start = Instant::now();
+                        paused = false;
+                        paused_at = Duration::ZERO;
                         show_help = false;
+                        already_notified = false;
                     }
                     _ => {}
                 }
             }
         }
 
-        if remaining.is_zero() {
-            continue;
+        if remaining.is_zero() && !already_notified {
+            already_notified = true;
+            #[cfg(target_os = "linux")]
+            Notification::new()
+                .summary("⌛ Timer Done")
+                .body(&format!("{} is over!", args.title))
+                .hint(notify_rust::Hint::Resident(true))
+                .show()
+                .ok();
         }
     }
 
@@ -194,10 +266,10 @@ struct Theme {
 
 fn mocha_theme() -> Theme {
     Theme {
-        bg: Color::Rgb(24, 24, 37),       // base
-        border: Color::Rgb(48, 45, 65),   // overlay
-        text: Color::Rgb(205, 214, 244),  // text
-        title: Color::Rgb(180, 190, 254), // blue/lavender
+        bg: Color::Rgb(24, 24, 37),
+        border: Color::Rgb(48, 45, 65),
+        text: Color::Rgb(205, 214, 244),
+        title: Color::Rgb(180, 190, 254),
     }
 }
 
