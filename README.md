@@ -1,18 +1,11 @@
-<p align="center">
-  <table>
-    <tr>
-      <td>
-        <img src="docs/time-rs-cli.png" alt="Time-RS cli logo" width="128" style="vertical-align: middle; border-radius: 12px;"/>
-      </td>
-      <td>
-        <h1 style="display: inline; vertical-align: middle; margin-left: 16px;">
-          Time-RS CLI 
-        </h1>
-      </td>
-    </tr>
-  </table>
-</p>
-
+<div align="center">
+  <div style="display: inline-block; vertical-align: middle;">
+    <img src="docs/time-rs-cli.png" alt="Time-RS CLI Logo" width="128" style="border-radius: 12px;"/>
+  </div>
+  <div style="display: inline-block; vertical-align: middle; margin-left: 16px;">
+    <h1 style="margin: 0; padding: 0;">Time-RS CLI</h1>
+  </div>
+</div>
 
 
 <h6 align="center" style="color:#bac2de;">
