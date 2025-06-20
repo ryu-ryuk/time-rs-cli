@@ -88,6 +88,7 @@ yay -S timers
   - `esc` — close help
   - `q` — quit
   - `p` - pomodoro timer
+  - `m` - manual set time
 
 * 🎨 Catppuccin Mocha theming (colors, borders, text)
 * 🧠 Smart redraws and minimalist centered layout
