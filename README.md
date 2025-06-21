@@ -21,15 +21,15 @@
   <a href="https://github.com/ryu-ryuk/time-rs-cli/issues">
     <img src="https://img.shields.io/badge/Issues-Open-f38ba8?style=for-the-badge&labelColor=1e1e2e&color=f38ba8&logo=github&logoColor=cdd6f4" alt="GitHub Issues"/>
   </a>
-  <!-- License -->
-  <a href="https://github.com/ryu-ryuk/time-rs-cli/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-89b4fa?style=for-the-badge&labelColor=1e1e2e&color=89b4fa&logo=openaccess&logoColor=cdd6f4" alt="MIT License"/>
-  </a>
-    <!-- AUR -->
-  <a href="https://aur.archlinux.org/packages/timers">
-    <img src="https://img.shields.io/badge/AUR-timers-89b4fa?style=for-the-badge&logo=arch-linux&logoColor=white&labelColor=1e1e2e" alt="AUR Timers"/>
-  </a>
-</p>
+<!-- License -->
+<a href="https://github.com/ryu-ryuk/time-rs-cli/blob/main/LICENSE">
+  <img src="https://img.shields.io/badge/License-MIT-89b4fa?style=for-the-badge&labelColor=1e1e2e&color=89b4fa&logo=openaccess&logoColor=cdd6f4" alt="MIT License"/>
+</a>
+<!-- AUR -->
+<a href="https://aur.archlinux.org/packages/timers">
+  <img src="https://img.shields.io/badge/AUR-timers-b4befe?style=for-the-badge&logo=arch-linux&logoColor=white&labelColor=1e1e2e" alt="AUR Timers"/>
+</a>
+
 
 
 <p align="center">
@@ -52,7 +52,7 @@
 
 ---
 
-## 🎥 Preview
+## Preview
 
 <p align="center">
   <img src="docs/preview.gif" alt="Preview of Time-RS CLI" width="85%"/>
@@ -62,24 +62,34 @@
 
 
 
-## 🧪 Installation
+## Installation
+
+<p align="center">
+  <a href="https://scripts.alokranjan.me/time-rs-cli/install.sh">
+    <img src="https://img.shields.io/badge/Install%20via%20curl-time--rs--cli-94e2d5?style=for-the-badge&logo=terminal&logoColor=white&labelColor=1e1e2e&color=94e2d5" alt="Install via curl"/>
+  </a><a href="https://aur.archlinux.org/packages/timers">
+    <img src="https://img.shields.io/badge/AUR-timers-89dceb?style=for-the-badge&logo=arch-linux&logoColor=white&labelColor=1e1e2e" alt="AUR Timers"/>
+  </a>
+</p>
 
 
-<a href="https://aur.archlinux.org/packages/timers">
-  <img src="https://img.shields.io/badge/AUR-timers-89dceb?style=for-the-badge&logo=arch-linux&logoColor=white&labelColor=1e1e2e" alt="AUR Timers"/>
-</a>
+### Install using CURL 
 
+```sh
+curl -sSL https://scripts.alokranjan.me/time-rs-cli/install.sh | bash
+```
 
-### 📦 Arch Linux / Manjaro (via AUR)
+> Installs the latest prebuilt binary from GitHub Releases.<br>
+> Currently supports: `linux-x86_64`
+
+### Arch Linux / Manjaro (via AUR)
 
 ```sh
 yay -S timers
 ```
-
->[!TIP]
 > you can also use paru or any other AUR helper.
 
-## ⏳ Features
+## Features
 
 * ⌨️ TUI controls:
   - `r` — restart timer
@@ -90,14 +100,14 @@ yay -S timers
   - `p` - pomodoro timer
   - `m` - manual set time
 
-* 🎨 Catppuccin Mocha theming (colors, borders, text)
-* 🧠 Smart redraws and minimalist centered layout
-* 🧱 Built using [`ratatui`](https://github.com/ratatui-org/ratatui) + `crossterm`
-* 📦 Single binary, zero dependencies at runtime
+* Catppuccin Mocha theming (colors, borders, text)
+* Smart redraws and minimalist centered layout
+* Built using [`ratatui`](https://github.com/ratatui-org/ratatui) + `crossterm`
+* Single binary, zero dependencies at runtime
 
 
 
-## 🧪 Try Kitty Popup Mode
+## Try Kitty Popup Mode
 
 You can use a floating terminal like `kitty` to simulate a popup view: | Might not work :(
 
